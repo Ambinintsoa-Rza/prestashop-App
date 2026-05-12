@@ -298,10 +298,26 @@ button.small {
   margin: 8px 0 0;
 }
 
+.amount {
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
+.order-meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .card-actions {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+}
+
+.card-actions select {
+  flex: 1;
+  min-width: 0;
 }
 
 .error {

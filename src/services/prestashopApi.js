@@ -146,3 +146,28 @@ export const normalizeProductDetail = (payload) => {
     taxRulesGroupId: pickText(product.id_tax_rules_group),
   }
 }
+
+export const normalizeOrderStates = (payload) => {
+  const raw = payload?.prestashop?.order_states?.order_state
+  if (!raw) return []
+
+  const list = Array.isArray(raw) ? raw : [raw]
+  return list.map((item) => ({
+    id: pickText(item.id),
+    name: pickLanguageValue(item.name),
+  }))
+}
+
+export const normalizeOrders = (payload) => {
+  const raw = payload?.prestashop?.orders?.order
+  if (!raw) return []
+
+  const list = Array.isArray(raw) ? raw : [raw]
+  return list.map((item) => ({
+    id: pickText(item.id),
+    reference: pickText(item.reference),
+    currentStateId: pickText(item.current_state),
+    totalPaid: pickText(item.total_paid),
+    dateAdd: pickText(item.date_add),
+  }))
+}
