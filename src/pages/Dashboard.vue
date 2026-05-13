@@ -292,6 +292,7 @@ onMounted(() => {
           <button :disabled="ordersLoading" @click="loadOrders">
             {{ ordersLoading ? "Chargement..." : "Rafraichir commandes" }}
           </button>
+          <button type="button" @click="router.push('/import')">Importer CSVs</button>
           <button class="ghost" type="button" @click="goLogin">Retour login</button>
         </div>
         <p class="hint">Lecture automatique au chargement de la page.</p>

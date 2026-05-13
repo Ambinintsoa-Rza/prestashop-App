@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import AdminLogin from "../pages/AdminLogin.vue";
 import Dashboard from "../pages/Dashboard.vue";
+import ImportPage from "../pages/Import.vue";
 import { checkAdminSession } from "../services/adminAuth";
 
 const routes = [
@@ -15,6 +16,12 @@ const routes = [
     path: "/dashboard",
     name: "Dashboard",
     component: Dashboard,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/import",
+    name: "Import",
+    component: ImportPage,
     meta: { requiresAuth: true },
   },
 ];

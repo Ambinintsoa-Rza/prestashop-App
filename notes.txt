@@ -1,0 +1,14 @@
+Produits (produit.csv)
+
+Créer/mettre à jour un produit par reference ?
+categorie → je mappe par nom (et je crée la catégorie si elle n’existe pas) ou tu veux un ID fixe ?
+Taxe (ex: 11,65%) → quel id_tax_rules_group utiliser (ID fixe, ou table de correspondance %) ?
+Stock (stock.csv)
+
+Tu veux des déclinaisons (combinations) via specificité = groupe d’attribut, karazany = valeur ?
+prix_vente_ttc → prix du produit global ou impact de la combinaison ?
+Si on ne fait pas de combinaisons, je peux juste mettre la quantité (stock) du produit.
+Commandes (commande.csv)
+
+On crée clients + adresses + commandes (complexe), ou seulement clients/adresses ?
+Si commandes: quel etat → ID d’état PrestaShop (ex: “paiement accepté” = 2, etc.) et quel module/paiement/carrier par défaut ?
