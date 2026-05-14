@@ -312,7 +312,7 @@ onMounted(() => {
         />
       </section>
 
-      <section v-if="!isEditing" class="panel">
+      <!-- <section v-if="!isEditing" class="panel">
         <h2>Produits</h2>
         <ProductList :items="products" :loading="loading" :error="error" @edit="startEdit" />
       </section>
@@ -324,17 +324,17 @@ onMounted(() => {
           @close="stopEdit"
           @saved="handleSaved"
         />
-      </section>
+      </section> -->
 
-      <section class="panel wide">
+      <!-- <section class="panel wide">
         <DataImport :base-url="baseUrl" :api-key="apiKey" />
-      </section>
+      </section> -->
 
-      <section class="panel">
+      <!-- <section class="panel">
         <h2>XML brut (extrait)</h2>
         <pre v-if="xmlPreview" class="code">{{ xmlPreview }}</pre>
         <p v-else class="empty">Aucun XML charge.</p>
-      </section>
+      </section> -->
     </main>
   </div>
 </template>
