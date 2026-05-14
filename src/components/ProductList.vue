@@ -33,11 +33,11 @@ defineEmits(['edit'])
         </div>
         <h3>{{ item.name || 'Sans nom' }}</h3>
         <p class="price">{{ item.price || '-' }} €</p>
-        <div class="card-actions">
+        <!-- <div class="card-actions">
           <button class="ghost small" type="button" @click="$emit('edit', item.id)">
             Modifier
           </button>
-        </div>
+        </div> -->
       </li>
     </ul>
   </div>

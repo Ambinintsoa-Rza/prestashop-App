@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import AdminLogin from "../pages/AdminLogin.vue";
 import Dashboard from "../pages/Dashboard.vue";
 import ImportPage from "../pages/Import.vue";
+import Product from "../pages/Product.vue";
 import { checkAdminSession } from "../services/adminAuth";
 
 const routes = [
@@ -24,6 +25,11 @@ const routes = [
     component: ImportPage,
     meta: { requiresAuth: true },
   },
+  {
+    path:"/front",
+    name:"Product",
+    component: Product,
+  }
 ];
 
 const router = createRouter({
