@@ -267,6 +267,31 @@ const goLogin = () => {
 const isEditing = computed(() => viewMode.value !== "list");
 const isCreating = computed(() => viewMode.value === "create");
 
+// ── Statistiques par jour ────────────────────────────
+const statsByDay = computed(() => {
+  const map = {};
+  for (const order of orders.value) {
+    const day = (order.dateAdd || '').slice(0, 10); // 'YYYY-MM-DD'
+    if (!day) continue;
+    if (!map[day]) map[day] = { date: day, count: 0, total: 0 };
+    map[day].count += 1;
+    map[day].total += parseFloat(order.totalPaid || 0);
+  }
+  // Trier du plus récent au plus ancien
+  return Object.values(map).sort((a, b) => b.date.localeCompare(a.date));
+});
+
+const statsTotal = computed(() => ({
+  count: orders.value.length,
+  total: orders.value.reduce((s, o) => s + parseFloat(o.totalPaid || 0), 0),
+}));
+
+const formatDate = (d) => {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+};
+
 onMounted(() => {
   loadOrders();
   loadProducts();
@@ -300,6 +325,85 @@ onMounted(() => {
     </header>
 
     <main class="content">
+
+      <!-- ── Tableau de bord ────────────────────────── -->
+      <section class="panel wide db-stats">
+        <div class="db-header">
+          <h2 class="db-title">📊 Tableau de bord</h2>
+          <span class="db-subtitle">Résumé des commandes</span>
+        </div>
+
+        <!-- KPI globaux -->
+        <div class="kpi-row">
+          <div class="kpi-card kpi-orders">
+            <span class="kpi-icon">🧾</span>
+            <div>
+              <p class="kpi-value">{{ statsTotal.count }}</p>
+              <p class="kpi-label">Commandes totales</p>
+            </div>
+          </div>
+          <div class="kpi-card kpi-revenue">
+            <span class="kpi-icon">💰</span>
+            <div>
+              <p class="kpi-value">{{ statsTotal.total.toFixed(2) }} €</p>
+              <p class="kpi-label">Chiffre d'affaires total</p>
+            </div>
+          </div>
+          <div class="kpi-card kpi-avg">
+            <span class="kpi-icon">📈</span>
+            <div>
+              <p class="kpi-value">
+                {{ statsTotal.count ? (statsTotal.total / statsTotal.count).toFixed(2) : '0.00' }} €
+              </p>
+              <p class="kpi-label">Panier moyen</p>
+            </div>
+          </div>
+          <div class="kpi-card kpi-days">
+            <span class="kpi-icon">📅</span>
+            <div>
+              <p class="kpi-value">{{ statsByDay.length }}</p>
+              <p class="kpi-label">Jours avec commandes</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table par jour -->
+        <div v-if="ordersLoading" class="db-loading">Chargement des statistiques…</div>
+        <div v-else-if="!statsByDay.length" class="db-empty">Aucune commande enregistrée.</div>
+        <div v-else class="db-table-wrap">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th class="text-right">Nb commandes</th>
+                <th class="text-right">Montant du jour</th>
+                <th class="text-right">% du CA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in statsByDay" :key="row.date" class="db-row">
+                <td class="db-date">{{ formatDate(row.date) }}</td>
+                <td class="text-right">
+                  <span class="db-badge">{{ row.count }}</span>
+                </td>
+                <td class="text-right db-amount">{{ row.total.toFixed(2) }} €</td>
+                <td class="text-right db-pct">
+                  {{ statsTotal.total ? ((row.total / statsTotal.total) * 100).toFixed(1) : '0.0' }}%
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="db-total-row">
+                <td><strong>Total général</strong></td>
+                <td class="text-right"><strong>{{ statsTotal.count }}</strong></td>
+                <td class="text-right db-amount"><strong>{{ statsTotal.total.toFixed(2) }} €</strong></td>
+                <td class="text-right"><strong>100%</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
       <section class="panel wide">
         <h2>Commandes</h2>
         <OrderList
