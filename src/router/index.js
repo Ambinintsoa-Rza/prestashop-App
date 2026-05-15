@@ -27,8 +27,13 @@ const routes = [
   },
   // ── Shop (frontoffice) ──────────────────────────
   {
-    path: "/front",
-    name: "ShopCatalog",
+    path: '/front',
+    name: 'ShopLogin',
+    component: () => import('../pages/shop/ShopLogin.vue'),
+  },
+  {
+    path: '/front/catalog',
+    name: 'ShopCatalog',
     component: Product,
   },
   {
