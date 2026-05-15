@@ -25,11 +25,32 @@ const routes = [
     component: ImportPage,
     meta: { requiresAuth: true },
   },
+  // ── Shop (frontoffice) ──────────────────────────
   {
-    path:"/front",
-    name:"Product",
+    path: "/front",
+    name: "ShopCatalog",
     component: Product,
-  }
+  },
+  {
+    path: "/front/product/:id",
+    name: "ShopProduct",
+    component: () => import("../pages/shop/ShopProduct.vue"),
+  },
+  {
+    path: "/front/cart",
+    name: "ShopCart",
+    component: () => import("../pages/shop/ShopCart.vue"),
+  },
+  {
+    path: "/front/checkout",
+    name: "ShopCheckout",
+    component: () => import("../pages/shop/ShopCheckout.vue"),
+  },
+  {
+    path: "/front/confirmation",
+    name: "ShopConfirmation",
+    component: () => import("../pages/shop/ShopConfirmation.vue"),
+  },
 ];
 
 const router = createRouter({
