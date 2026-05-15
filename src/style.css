@@ -350,3 +350,175 @@ button.small {
     flex-direction: column;
   }
 }
+
+/* ── Dashboard statistiques ─────────────────────────── */
+.db-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.db-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.db-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.db-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* KPI cards */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  background: #fafafa;
+}
+
+.kpi-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 2px;
+  line-height: 1;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.kpi-orders  { border-left: 4px solid var(--accent); }
+.kpi-revenue { border-left: 4px solid var(--ok); }
+.kpi-avg     { border-left: 4px solid #f59e0b; }
+.kpi-days    { border-left: 4px solid #8b5cf6; }
+
+.kpi-orders  .kpi-value { color: var(--accent-dark); }
+.kpi-revenue .kpi-value { color: var(--ok); }
+.kpi-avg     .kpi-value { color: #d97706; }
+.kpi-days    .kpi-value { color: #7c3aed; }
+
+/* Table */
+.db-table-wrap {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+}
+
+.db-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.db-table thead tr {
+  background: #f4f2ee;
+}
+
+.db-table th {
+  padding: 12px 16px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.db-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0ede8;
+  vertical-align: middle;
+}
+
+.db-row:hover td {
+  background: #faf9f7;
+}
+
+.db-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.db-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 99px;
+  background: rgba(0, 162, 184, 0.12);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.db-amount {
+  font-weight: 700;
+  color: var(--ok);
+}
+
+.db-pct {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Ligne total */
+.db-total-row td {
+  background: #f4f2ee;
+  border-top: 2px solid var(--stroke);
+  border-bottom: none;
+  font-size: 15px;
+  padding: 14px 16px;
+}
+
+.db-total-row .db-amount {
+  color: var(--ink);
+}
+
+/* States */
+.db-loading {
+  color: var(--muted);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+.db-empty {
+  color: var(--muted);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
