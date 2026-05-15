@@ -131,6 +131,180 @@ export const normalizeProducts = (payload) => {
   }))
 }
 
+export const normalizeShopProducts = (payload) => {
+  const raw = payload?.prestashop?.products?.product
+  if (!raw) return []
+  const list = Array.isArray(raw) ? raw : [raw]
+  return list.map((item) => ({
+    id: pickText(item.id),
+    name: pickLanguageValue(item.name),
+    price: pickText(item.price),
+    active: pickText(item.active) === '1',
+    defaultImageId: pickText(item.id_default_image),
+    descriptionShort: pickLanguageValue(item.description_short),
+  }))
+}
+
+export const normalizeShopProductDetail = (payload) => {
+  const product = payload?.prestashop?.product
+  if (!product) return null
+  return {
+    id: pickText(product.id),
+    name: pickLanguageValue(product.name),
+    description: pickLanguageValue(product.description),
+    descriptionShort: pickLanguageValue(product.description_short),
+    price: pickText(product.price),
+    active: pickText(product.active) === '1',
+    defaultImageId: pickText(product.id_default_image),
+    reference: pickText(product.reference),
+    quantity: pickText(product.quantity),
+    languageId: pickLanguageId(product.name),
+    categoryId: pickText(product.id_category_default),
+  }
+}
+
+export const buildImageUrl = (baseUrl, productId, imageId, apiKey) => {
+  if (!imageId || imageId === '0' || imageId === '') return null
+  return `${baseUrl}/images/products/${productId}/${imageId}?ws_key=${apiKey}`
+}
+
+export const buildCustomerXml = (data) => `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop>
+<customer>
+  <firstname><![CDATA[${data.firstname}]]></firstname>
+  <lastname><![CDATA[${data.lastname}]]></lastname>
+  <email><![CDATA[${data.email}]]></email>
+  <passwd><![CDATA[${data.password}]]></passwd>
+  <active>1</active>
+  <is_guest>0</is_guest>
+  <id_lang>1</id_lang>
+  <id_default_group>3</id_default_group>
+  <newsletter>0</newsletter>
+  <optin>0</optin>
+  <id_gender>1</id_gender>
+</customer>
+</prestashop>`
+
+export const buildAddressXml = (data) => `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop>
+<address>
+  <id_customer><![CDATA[${data.customerId}]]></id_customer>
+  <id_country><![CDATA[${data.countryId || '8'}]]></id_country>
+  <id_state>0</id_state>
+  <alias><![CDATA[Mon adresse]]></alias>
+  <firstname><![CDATA[${data.firstname}]]></firstname>
+  <lastname><![CDATA[${data.lastname}]]></lastname>
+  <address1><![CDATA[${data.address1}]]></address1>
+  <postcode><![CDATA[${data.postcode}]]></postcode>
+  <city><![CDATA[${data.city}]]></city>
+  <phone><![CDATA[${data.phone || '0600000000'}]]></phone>
+  <deleted>0</deleted>
+</address>
+</prestashop>`
+
+export const buildCartXml = (data) => {
+  const rows = data.items
+    .map(
+      (item) => `      <cart_row>
+        <id_product><![CDATA[${item.id}]]></id_product>
+        <id_product_attribute>0</id_product_attribute>
+        <id_address_delivery><![CDATA[${data.addressId}]]></id_address_delivery>
+        <id_customization>0</id_customization>
+        <quantity><![CDATA[${item.quantity}]]></quantity>
+      </cart_row>`
+    )
+    .join('\n')
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop>
+<cart>
+  <id_address_delivery><![CDATA[${data.addressId}]]></id_address_delivery>
+  <id_address_invoice><![CDATA[${data.addressId}]]></id_address_invoice>
+  <id_currency>1</id_currency>
+  <id_customer><![CDATA[${data.customerId}]]></id_customer>
+  <id_lang>1</id_lang>
+  <id_carrier>1</id_carrier>
+  <recyclable>0</recyclable>
+  <gift>0</gift>
+  <mobile_theme>0</mobile_theme>
+  <allow_seperated_package>0</allow_seperated_package>
+  <associations>
+    <cart_rows>
+${rows}
+    </cart_rows>
+  </associations>
+</cart>
+</prestashop>`
+}
+
+// Génère un secure_key MD5-like de 32 caractères hexadécimaux
+const generateSecureKey = () => {
+  const arr = new Uint8Array(16)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export const buildOrderXml = (data) => {
+  const total = data.total.toFixed(6)
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop>
+<order>
+  <id_address_delivery><![CDATA[${data.addressId}]]></id_address_delivery>
+  <id_address_invoice><![CDATA[${data.addressId}]]></id_address_invoice>
+  <id_cart><![CDATA[${data.cartId}]]></id_cart>
+  <id_currency>1</id_currency>
+  <id_lang>1</id_lang>
+  <id_customer><![CDATA[${data.customerId}]]></id_customer>
+  <id_carrier>1</id_carrier>
+  <module><![CDATA[ps_checkpayment]]></module>
+  <payment><![CDATA[Paiement à la livraison]]></payment>
+  <current_state>1</current_state>
+  <total_paid>${total}</total_paid>
+  <total_paid_tax_incl>${total}</total_paid_tax_incl>
+  <total_paid_tax_excl>${total}</total_paid_tax_excl>
+  <total_paid_real>0.000000</total_paid_real>
+  <total_products>${total}</total_products>
+  <total_products_wt>${total}</total_products_wt>
+  <total_shipping>0.000000</total_shipping>
+  <total_shipping_tax_incl>0.000000</total_shipping_tax_incl>
+  <total_shipping_tax_excl>0.000000</total_shipping_tax_excl>
+  <total_discounts>0.000000</total_discounts>
+  <total_discounts_tax_incl>0.000000</total_discounts_tax_incl>
+  <total_discounts_tax_excl>0.000000</total_discounts_tax_excl>
+  <total_wrapping>0.000000</total_wrapping>
+  <total_wrapping_tax_incl>0.000000</total_wrapping_tax_incl>
+  <total_wrapping_tax_excl>0.000000</total_wrapping_tax_excl>
+  <carrier_tax_rate>0.000</carrier_tax_rate>
+  <conversion_rate>1.000000</conversion_rate>
+  <round_mode>2</round_mode>
+  <round_type>1</round_type>
+  <valid>0</valid>
+  <recyclable>0</recyclable>
+  <gift>0</gift>
+  <secure_key>${generateSecureKey()}</secure_key>
+</order>
+</prestashop>`
+}
+
+export const extractCreatedId = (json) => {
+  const node = json?.prestashop
+  if (!node) return null
+  const keys = Object.keys(node)
+  for (const key of keys) {
+    const item = node[key]
+    if (item && item.id) return pickText(item.id)
+  }
+  return null
+}
+
+export const extractOrderReference = (json) => {
+  const order = json?.prestashop?.order
+  if (!order) return null
+  return {
+    id: pickText(order.id),
+    reference: pickText(order.reference),
+  }
+}
+
 export const normalizeProductDetail = (payload) => {
   const product = payload?.prestashop?.product
   if (!product) return null
