@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useShopStore } from '../../store/useShopStore'
 import {
@@ -13,13 +13,21 @@ import {
 } from '../../services/prestashopApi'
 
 const router = useRouter()
-const { cart, cartTotal, clearCart, setLastOrder } = useShopStore()
+const { cart, cartTotal, clearCart, setLastOrder, currentCustomer } = useShopStore()
 
 const baseUrl = import.meta.env.VITE_PS_BASE_URL || '/ps-api'
-const apiKey = import.meta.env.VITE_PS_WS_KEY || ''
-const config = { baseUrl, apiKey }
+const apiKey  = import.meta.env.VITE_PS_WS_KEY || ''
+const config  = { baseUrl, apiKey }
 
-const step = ref(1) // 1 = infos client, 2 = adresse
+// Utilisateur connecté (non anonyme) ?
+const isLoggedIn = computed(() =>
+  currentCustomer.value && !currentCustomer.value.isAnonymous && currentCustomer.value.id
+)
+
+// Étape : si connecté → part direct en step 2 (adresse)
+const step = ref(1)
+onMounted(() => { if (isLoggedIn.value) step.value = 2 })
+
 const submitting = ref(false)
 const error = ref('')
 
@@ -27,35 +35,54 @@ const form = ref({
   firstname: '',
   lastname: '',
   email: '',
-  password: 'Pwd@' + Math.random().toString(36).slice(2, 8), // auto
+  password: 'Pwd@' + Math.random().toString(36).slice(2, 10),
   address1: '',
   postcode: '',
   city: '',
   phone: '',
-  countryId: '8', // France
+  countryId: '8',
+})
+
+// Pré-remplir depuis le customer sélectionné
+onMounted(() => {
+  const c = currentCustomer.value
+  if (c && !c.isAnonymous) {
+    form.value.firstname = c.firstname || ''
+    form.value.lastname  = c.lastname  || ''
+    form.value.email     = c.email     || ''
+  }
 })
 
 const goBack = () => router.push({ name: 'ShopCart' })
+const changeAccount = () => router.push({ name: 'ShopLogin' })
 
+// ── Passer la commande ─────────────────────────────────────
 const placeOrder = async () => {
   if (!cart.value.length) return
   error.value = ''
   submitting.value = true
 
   try {
-    // 1. Créer le client
-    const custXml = buildCustomerXml(form.value)
-    const custRes = await sendXmlResource('customers', custXml, 'POST', config)
-    const customerId = extractCreatedId(custRes.json)
-    if (!customerId) throw new Error('Impossible de créer le client.')
+    let customerId
 
-    // 2. Créer l'adresse
+    // Client connecté → réutiliser son ID, pas de POST /customers
+    if (isLoggedIn.value) {
+      customerId = currentCustomer.value.id
+    } else {
+      // Anonyme → créer un compte
+      const custXml = buildCustomerXml(form.value)
+      const custRes = await sendXmlResource('customers', custXml, 'POST', config)
+      customerId = extractCreatedId(custRes.json)
+      if (!customerId) throw new Error('Impossible de créer le compte client.')
+    }
+
+    // Adresse
     const addrXml = buildAddressXml({ ...form.value, customerId })
     const addrRes = await sendXmlResource('addresses', addrXml, 'POST', config)
     const addressId = extractCreatedId(addrRes.json)
-    if (!addressId) throw new Error('Impossible de créer l\'adresse.')
+    if (!addressId) throw new Error("Impossible d'enregistrer l'adresse.")
 
-    // 3. Créer le panier
+    // Panier
     const cartXml = buildCartXml({
       customerId,
       addressId,
@@ -65,13 +92,8 @@ const placeOrder = async () => {
     const cartId = extractCreatedId(cartRes.json)
     if (!cartId) throw new Error('Impossible de créer le panier.')
 
-    // 4. Créer la commande
-    const orderXml = buildOrderXml({
-      customerId,
-      addressId,
-      cartId,
-      total: cartTotal.value,
-    })
+    // Commande
+    const orderXml = buildOrderXml({ customerId, addressId, cartId, total: cartTotal.value })
     const orderRes = await sendXmlResource('orders', orderXml, 'POST', config)
     const orderInfo = extractOrderReference(orderRes.json)
 
@@ -113,13 +135,15 @@ const prevStep = () => { step.value = 1 }
     </header>
 
     <main class="shop-main">
+
       <!-- Stepper -->
       <div class="stepper">
-        <div class="step" :class="{ active: step === 1, done: step > 1 }">
-          <span class="step-num">1</span>
+        <!-- Étape 1 : toujours visible, done si on est connecté -->
+        <div class="step" :class="{ active: step === 1, done: step > 1 || isLoggedIn }">
+          <span class="step-num">{{ (step > 1 || isLoggedIn) ? '✓' : '1' }}</span>
           <span class="step-label">Vos informations</span>
         </div>
-        <div class="step-line" :class="{ done: step > 1 }"></div>
+        <div class="step-line" :class="{ done: step > 1 || isLoggedIn }"></div>
         <div class="step" :class="{ active: step === 2 }">
           <span class="step-num">2</span>
           <span class="step-label">Adresse de livraison</span>
@@ -127,14 +151,25 @@ const prevStep = () => { step.value = 1 }
       </div>
 
       <div class="checkout-layout">
-        <!-- Formulaire -->
         <section class="checkout-form-section">
 
           <!-- Erreur -->
           <p v-if="error" class="checkout-error">⚠️ {{ error }}</p>
 
-          <!-- Étape 1 : Infos client -->
-          <div v-if="step === 1">
+          <!-- ── Utilisateur connecté : bannière identité ── -->
+          <div v-if="isLoggedIn && step === 2" class="logged-banner">
+            <div class="logged-avatar">
+              {{ (currentCustomer.firstname?.[0] || '').toUpperCase() }}{{ (currentCustomer.lastname?.[0] || '').toUpperCase() }}
+            </div>
+            <div class="logged-info">
+              <p class="logged-name">{{ currentCustomer.firstname }} {{ currentCustomer.lastname }}</p>
+              <p class="logged-email">{{ currentCustomer.email }}</p>
+            </div>
+            <button class="logged-change" @click="changeAccount">Changer →</button>
+          </div>
+
+          <!-- ── Étape 1 : Infos client (anonyme seulement) ── -->
+          <div v-if="step === 1 && !isLoggedIn">
             <h2 class="form-title">Vos informations</h2>
             <div class="form-grid">
               <div class="field-group">
@@ -157,7 +192,7 @@ const prevStep = () => { step.value = 1 }
             <button class="btn-next" @click="nextStep">Continuer →</button>
           </div>
 
-          <!-- Étape 2 : Adresse -->
+          <!-- ── Étape 2 : Adresse ── -->
           <div v-if="step === 2">
             <h2 class="form-title">Adresse de livraison</h2>
             <div class="form-grid">
@@ -173,12 +208,17 @@ const prevStep = () => { step.value = 1 }
                 <label>Ville *</label>
                 <input v-model="form.city" type="text" placeholder="Paris" />
               </div>
+              <!-- Téléphone ici aussi pour les utilisateurs connectés -->
+              <div v-if="isLoggedIn" class="field-group full">
+                <label>Téléphone</label>
+                <input v-model="form.phone" type="tel" placeholder="06 00 00 00 00" />
+              </div>
               <div class="field-group full">
                 <label>Pays</label>
                 <select v-model="form.countryId">
                   <option value="8">France</option>
-                  <option value="21">Belgique</option>
-                  <option value="21">Suisse</option>
+                  <option value="4">Belgique</option>
+                  <option value="19">Suisse</option>
                   <option value="110">Madagascar</option>
                 </select>
               </div>
@@ -189,12 +229,12 @@ const prevStep = () => { step.value = 1 }
               <div class="payment-icon">💵</div>
               <div>
                 <p class="payment-title">Paiement à la livraison</p>
-                <p class="payment-desc">Vous réglez en espèces à la réception de votre commande. Livraison gratuite.</p>
+                <p class="payment-desc">Vous réglez en espèces à la réception. Livraison gratuite.</p>
               </div>
             </div>
 
             <div class="form-actions">
-              <button class="btn-back-step" @click="prevStep">← Retour</button>
+              <button v-if="!isLoggedIn" class="btn-back-step" @click="prevStep">← Retour</button>
               <button
                 class="btn-order"
                 :disabled="submitting || !form.address1 || !form.postcode || !form.city"
@@ -205,6 +245,7 @@ const prevStep = () => { step.value = 1 }
               </button>
             </div>
           </div>
+
         </section>
 
         <!-- Résumé commande -->
@@ -286,9 +327,7 @@ const prevStep = () => { step.value = 1 }
 }
 .step.active .step-num { background: rgba(167,139,250,0.2); border-color: #a78bfa; color: #a78bfa; }
 .step.done .step-num { background: rgba(52,211,153,0.15); border-color: #34d399; color: #34d399; }
-.step-line {
-  width: 60px; height: 1px; background: rgba(255,255,255,0.1); margin: 0 12px;
-}
+.step-line { width: 60px; height: 1px; background: rgba(255,255,255,0.1); margin: 0 12px; }
 .step-line.done { background: #34d399; }
 
 /* Layout */
@@ -297,14 +336,35 @@ const prevStep = () => { step.value = 1 }
 }
 @media (max-width: 900px) { .checkout-layout { grid-template-columns: 1fr; } }
 
-/* Form */
+/* Form section */
 .checkout-form-section {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
   border-radius: 20px; padding: 32px;
 }
-.form-title {
-  font-size: 20px; font-weight: 700; margin: 0 0 24px; color: #f0f0f8;
+
+/* Bannière utilisateur connecté */
+.logged-banner {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.25);
+  border-radius: 16px; padding: 16px 20px; margin-bottom: 28px;
 }
+.logged-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: white; flex-shrink: 0;
+}
+.logged-info { flex: 1; min-width: 0; }
+.logged-name { font-size: 15px; font-weight: 700; margin: 0 0 2px; color: #f0f0f8; }
+.logged-email { font-size: 13px; color: rgba(232,232,240,0.5); margin: 0; }
+.logged-change {
+  background: transparent; border: 1px solid rgba(167,139,250,0.35);
+  color: #a78bfa; border-radius: 10px; padding: 7px 14px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.logged-change:hover { background: rgba(167,139,250,0.15); }
+
+.form-title { font-size: 20px; font-weight: 700; margin: 0 0 24px; color: #f0f0f8; }
 .form-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;
 }
@@ -317,12 +377,9 @@ const prevStep = () => { step.value = 1 }
 .field-group input, .field-group select {
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
   border-radius: 12px; padding: 12px 14px; color: #e8e8f0; font-size: 15px;
-  font-family: inherit; outline: none; transition: border-color 0.2s;
-  width: 100%;
+  font-family: inherit; outline: none; transition: border-color 0.2s; width: 100%;
 }
-.field-group input:focus, .field-group select:focus {
-  border-color: #a78bfa;
-}
+.field-group input:focus, .field-group select:focus { border-color: #a78bfa; }
 .field-group select { appearance: none; cursor: pointer; }
 .field-group input::placeholder { color: rgba(232,232,240,0.25); }
 
@@ -367,9 +424,7 @@ const prevStep = () => { step.value = 1 }
 }
 .summary-title { font-size: 18px; font-weight: 700; margin: 0 0 20px; }
 .summary-items { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 10px; }
-.summary-item {
-  display: flex; align-items: center; gap: 8px; font-size: 14px;
-}
+.summary-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .summary-item-name { flex: 1; color: rgba(232,232,240,0.7); }
 .summary-item-qty { color: rgba(232,232,240,0.4); font-size: 13px; }
 .summary-item-price { font-weight: 700; color: #a78bfa; min-width: 64px; text-align: right; }
