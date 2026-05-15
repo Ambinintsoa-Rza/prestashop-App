@@ -24,7 +24,7 @@ const loadProducts = async () => {
   try {
     const { json } = await fetchResource(
       'products',
-      { display: '[id,name,price,active,id_default_image,description_short]' },
+      { display: '[id,name,price,active,id_default_image,description_short,date_add,available_date]' },
       { baseUrl, apiKey }
     )
     products.value = normalizeShopProducts(json).filter((p) => p.active)
@@ -39,6 +39,20 @@ const goToProduct = (id) => router.push({ name: 'ShopProduct', params: { id } })
 const goToCart = () => router.push({ name: 'ShopCart' })
 
 const imgUrl = (p) => buildImageUrl(baseUrl, p.id, p.defaultImageId, apiKey)
+
+// ── Badges HOT / NEW ──────────────────────────────────────
+const getProductBadge = (p) => {
+  if (!p.dateAvailable) return null
+  const now = Date.now()
+  const released = new Date(p.dateAvailable).getTime()
+  if (isNaN(released)) return null
+  const diffMs = now - released
+  const ONE_DAY = 24 * 60 * 60 * 1000
+  const ONE_WEEK = 7 * ONE_DAY
+  if (diffMs >= 0 && diffMs < ONE_DAY)   return 'hot'  // sorti < 1 jour
+  if (diffMs >= 0 && diffMs < ONE_WEEK)  return 'new'  // sorti < 1 semaine
+  return null
+}
 
 onMounted(loadProducts)
 </script>
@@ -95,6 +109,14 @@ onMounted(loadProducts)
               @error="($event.target.style.display='none')"
             />
             <div v-else class="product-img-placeholder">📦</div>
+
+            <!-- Badge HOT / NEW -->
+            <span
+              v-if="getProductBadge(p)"
+              :class="['product-badge', `badge-${getProductBadge(p)}`]"
+            >
+              {{ getProductBadge(p) === 'hot' ? '🔥 HOT' : '✨ NEW' }}
+            </span>
           </div>
           <div class="product-card-body">
             <h3 class="product-card-name">{{ p.name }}</h3>
@@ -323,4 +345,36 @@ onMounted(loadProducts)
   transition: opacity 0.2s;
 }
 .product-card:hover .product-card-cta { opacity: 1; }
+
+/* ── Badges HOT / NEW ─────────────────────────────────── */
+.product-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.badge-hot {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  animation: pulse-hot 2s ease-in-out infinite;
+}
+@keyframes pulse-hot {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+  50%       { box-shadow: 0 0 20px rgba(249, 115, 22, 0.8); }
+}
+
+.badge-new {
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+}
 </style>

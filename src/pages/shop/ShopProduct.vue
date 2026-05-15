@@ -49,6 +49,20 @@ const handleAddToCart = () => {
 const goBack = () => router.push({ name: 'ShopCatalog' })
 const goCart = () => router.push({ name: 'ShopCart' })
 
+// ── Badge HOT / NEW ─────────────────────────────────
+const getProductBadge = (p) => {
+  if (!p?.dateAvailable) return null
+  const now = Date.now()
+  const released = new Date(p.dateAvailable).getTime()
+  if (isNaN(released)) return null
+  const diff = now - released
+  const DAY  = 24 * 60 * 60 * 1000
+  const WEEK = 7 * DAY
+  if (diff >= 0 && diff < DAY)  return 'hot'
+  if (diff >= 0 && diff < WEEK) return 'new'
+  return null
+}
+
 onMounted(loadProduct)
 </script>
 
@@ -85,6 +99,14 @@ onMounted(loadProduct)
               @error="($event.target.style.display='none')"
             />
             <div v-else class="detail-img-placeholder">📦</div>
+
+            <!-- Badge HOT / NEW -->
+            <span
+              v-if="getProductBadge(product)"
+              :class="['detail-badge', `badge-${getProductBadge(product)}`]"
+            >
+              {{ getProductBadge(product) === 'hot' ? '🔥 HOT' : '✨ NEW' }}
+            </span>
           </div>
         </div>
 
@@ -274,5 +296,35 @@ onMounted(loadProduct)
 .detail-desc {
   font-size: 14px; color: rgba(232,232,240,0.45); line-height: 1.7;
   border-top: 1px solid rgba(255,255,255,0.07); padding-top: 24px;
+}
+
+/* ── Badge HOT / NEW sur la fiche produit ──────────────────── */
+.detail-img-wrap { position: relative; }
+.detail-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  z-index: 2;
+}
+.badge-hot {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+  animation: pulse-hot 2s ease-in-out infinite;
+}
+@keyframes pulse-hot {
+  0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+  50%       { box-shadow: 0 0 24px rgba(249, 115, 22, 0.8); }
+}
+.badge-new {
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
 }
 </style>

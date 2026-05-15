@@ -142,6 +142,7 @@ export const normalizeShopProducts = (payload) => {
     active: pickText(item.active) === '1',
     defaultImageId: pickText(item.id_default_image),
     descriptionShort: pickLanguageValue(item.description_short),
+    dateAvailable: pickText(item.date_add) || pickText(item.available_date) || '',
   }))
 }
 
@@ -160,6 +161,7 @@ export const normalizeShopProductDetail = (payload) => {
     quantity: pickText(product.quantity),
     languageId: pickLanguageId(product.name),
     categoryId: pickText(product.id_category_default),
+    dateAvailable: pickText(product.date_add) || pickText(product.available_date) || '',
   }
 }
 
