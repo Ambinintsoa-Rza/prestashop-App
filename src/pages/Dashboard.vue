@@ -306,6 +306,7 @@ onMounted(() => {
           <button :disabled="ordersLoading" @click="loadOrders">
             {{ ordersLoading ? "Chargement..." : "Rafraichir commandes" }}
           </button>
+          <button type="button" @click="router.push('/stock')">Gérer les stocks</button>
           <button type="button" @click="router.push('/import')">Importer CSVs</button>
           <button class="ghost" type="button" @click="goLogin">Retour login</button>
         </div>

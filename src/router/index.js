@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import AdminLogin from "../pages/AdminLogin.vue";
 import Dashboard from "../pages/Dashboard.vue";
 import ImportPage from "../pages/Import.vue";
+import StockPage from "../pages/Stock.vue";
 import Product from "../pages/Product.vue";
 import { checkAdminSession } from "../services/adminAuth";
 
@@ -23,6 +24,12 @@ const routes = [
     path: "/import",
     name: "Import",
     component: ImportPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/stock",
+    name: "Stock",
+    component: StockPage,
     meta: { requiresAuth: true },
   },
   // ── Shop (frontoffice) ──────────────────────────
