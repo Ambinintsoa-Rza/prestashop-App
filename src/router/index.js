@@ -56,6 +56,11 @@ const routes = [
     name: "ShopConfirmation",
     component: () => import("../pages/shop/ShopConfirmation.vue"),
   },
+  {
+    path: "/front/orders",
+    name: "ShopOrders",
+    component: () => import("../pages/shop/ShopOrders.vue"),
+  },
 ];
 
 const router = createRouter({

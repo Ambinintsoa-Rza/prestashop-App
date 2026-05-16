@@ -7,13 +7,15 @@ const joinUrl = (baseUrl, resource) => {
 }
 
 const buildQuery = (params = {}) => {
-  const search = new URLSearchParams()
+  const parts = []
   Object.entries(params).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return
-    search.append(key, String(value))
+    // PrestaShop WS exige des crochets littéraux dans les clés ET valeurs
+    // (ex: filter[id_customer]=[3] et display=[id,name])
+    // Ne pas encoder ni les clés ni les valeurs
+    parts.push(`${key}=${value}`)
   })
-  const query = search.toString()
-  return query ? `?${query}` : ''
+  return parts.length ? `?${parts.join('&')}` : ''
 }
 
 const encodeKey = (apiKey) => {
@@ -52,7 +54,8 @@ export const fetchResource = async (resource, params, config = {}) => {
   const xml = await response.text()
 
   if (!response.ok) {
-    throw new Error(`API erreur ${response.status}: ${response.statusText || 'Erreur inconnue'}`)
+    const errBody = xml ? xml.slice(0, 1200) : ''
+    throw new Error(`API erreur ${response.status}: ${response.statusText || 'Erreur inconnue'} | ${errBody}`)
   }
 
   const json = parseXmlToJson(xml)
@@ -83,7 +86,8 @@ export const sendXmlResource = async (resource, xmlBody, method, config = {}) =>
 
   const xml = await response.text()
   if (!response.ok) {
-    const details = xml ? ` | Reponse: ${xml.slice(0, 800)}` : ''
+    const details = xml ? ` | Reponse: ${xml}` : ''
+    console.error('API Error Response:', xml)
     throw new Error(
       `API erreur ${response.status}: ${response.statusText || 'Erreur inconnue'}${details}`
     )
@@ -258,9 +262,9 @@ export const buildOrderXml = (data) => {
   <id_lang>1</id_lang>
   <id_customer><![CDATA[${data.customerId}]]></id_customer>
   <id_carrier>1</id_carrier>
-  <module><![CDATA[ps_checkpayment]]></module>
+  <module><![CDATA[ps_cashondelivery]]></module>
   <payment><![CDATA[Paiement à la livraison]]></payment>
-  <current_state>1</current_state>
+  <current_state>10</current_state>
   <total_paid>${total}</total_paid>
   <total_paid_tax_incl>${total}</total_paid_tax_incl>
   <total_paid_tax_excl>${total}</total_paid_tax_excl>
@@ -280,7 +284,7 @@ export const buildOrderXml = (data) => {
   <conversion_rate>1.000000</conversion_rate>
   <round_mode>2</round_mode>
   <round_type>1</round_type>
-  <valid>0</valid>
+  <valid>1</valid>
   <recyclable>0</recyclable>
   <gift>0</gift>
   <secure_key>${generateSecureKey()}</secure_key>

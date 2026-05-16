@@ -107,6 +107,7 @@ const placeOrder = async () => {
     clearCart()
     router.push({ name: 'ShopConfirmation' })
   } catch (err) {
+    console.error('Order creation error:', err)
     error.value = err.message || 'Une erreur est survenue.'
   } finally {
     submitting.value = false

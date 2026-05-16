@@ -36,33 +36,22 @@ const updatingOrderId = ref(null);
 
 const allowedOrderStates = [
   {
-    key: "payment_failed",
-    label: "Echec paiement",
+    key: "payment_done",
+    label: "Paiement effectué",
     aliases: [
-      "echec paiement",
-      "echec de paiement",
-      "erreur paiement",
-      "erreur de paiement",
-      "paiement erreur",
-      "paiement en erreur",
-      "payment error",
-      "payment failed",
+      "paiement accepte", "paiement effectue", "payment accepted",
+      "paid", "awaiting check payment", "check payment",
+      "en attente de paiement par cheque",
     ],
   },
   {
-    key: "payment_done",
-    label: "Paiement effectue",
-    aliases: ["paiement effectue", "paiement accepte", "payment accepted", "paid"],
-  },
-  {
     key: "canceled",
-    label: "Annule",
+    label: "Annulé",
     aliases: ["annule", "annulee", "canceled", "cancelled", "annulation"],
   },
 ];
 
 const envOrderStateOverrides = {
-  payment_failed: import.meta.env.VITE_ORDER_STATE_PAYMENT_FAILED_ID,
   payment_done: import.meta.env.VITE_ORDER_STATE_PAYMENT_DONE_ID,
   canceled: import.meta.env.VITE_ORDER_STATE_CANCELED_ID,
 };
