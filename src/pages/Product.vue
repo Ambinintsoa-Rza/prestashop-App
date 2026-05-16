@@ -11,7 +11,7 @@ import {
 import { useShopStore } from '../store/useShopStore'
 
 const router = useRouter()
-const { cartCount } = useShopStore()
+const { cartCount, currentCustomer } = useShopStore()
 
 const products   = ref([])
 const categories = ref([])  // [{ id, name }]
@@ -61,6 +61,7 @@ const loadAll = async () => {
 
 const goToProduct = (id) => router.push({ name: 'ShopProduct', params: { id } })
 const goToCart    = ()   => router.push({ name: 'ShopCart' })
+const goToOrders  = ()   => router.push({ name: 'ShopOrders' })
 const imgUrl      = (p)  => buildImageUrl(baseUrl, p.id, p.defaultImageId, apiKey)
 
 // ── Badges HOT / NEW ──────────────────────────────────────
@@ -129,11 +130,22 @@ onMounted(loadAll)
           <span class="shop-logo-icon">🛍️</span>
           <span class="shop-brand-name">Ma Boutique</span>
         </div>
-        <button class="cart-btn" @click="goToCart">
-          <span class="cart-icon">🛒</span>
-          <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
-          <span class="cart-label">Panier</span>
-        </button>
+        <div class="shop-header-actions">
+          <!-- Mes commandes (client connecté uniquement) -->
+          <button
+            v-if="currentCustomer && !currentCustomer.isAnonymous"
+            class="orders-btn"
+            @click="goToOrders"
+          >
+            📋 Mes commandes
+          </button>
+
+          <button class="cart-btn" @click="goToCart">
+            <span class="cart-icon">🛒</span>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+            <span class="cart-label">Panier</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -314,6 +326,17 @@ onMounted(loadAll)
   width: 20px; height: 20px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
 }
+.shop-header-actions {
+  display: flex; align-items: center; gap: 10px;
+}
+.orders-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(96,165,250,0.12); border: 1px solid rgba(96,165,250,0.35);
+  color: #60a5fa; border-radius: 12px; padding: 8px 16px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, transform 0.15s; white-space: nowrap;
+}
+.orders-btn:hover { background: rgba(96,165,250,0.22); transform: translateY(-1px); }
 
 /* Hero */
 .shop-hero { text-align: center; padding: 64px 24px 32px; }
