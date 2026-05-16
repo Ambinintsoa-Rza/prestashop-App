@@ -132,6 +132,36 @@ export const normalizeProducts = (payload) => {
     name: pickLanguageValue(item.name),
     price: pickText(item.price),
     active: pickText(item.active) === '1',
+    reference: pickText(item.reference),
+  }))
+}
+
+export const normalizeStockAvailables = (payload) => {
+  const raw = payload?.prestashop?.stock_availables?.stock_available
+  if (!raw) return []
+
+  const list = Array.isArray(raw) ? raw : [raw]
+  return list.map((item) => ({
+    id: pickText(item.id),
+    productId: pickText(item.id_product),
+    productAttributeId: pickText(item.id_product_attribute),
+    quantity: pickText(item.quantity),
+    dependsOnStock: pickText(item.depends_on_stock),
+    outOfStock: pickText(item.out_of_stock),
+  }))
+}
+
+export const normalizeOrderDetails = (payload) => {
+  const raw = payload?.prestashop?.order_details?.order_detail
+  if (!raw) return []
+
+  const list = Array.isArray(raw) ? raw : [raw]
+  return list.map((item) => ({
+    id: pickText(item.id),
+    orderId: pickText(item.id_order),
+    productId: pickText(item.product_id),
+    quantity: pickText(item.product_quantity),
+    name: pickText(item.product_name),
   }))
 }
 
